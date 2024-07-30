@@ -1,0 +1,18 @@
+{
+  "name": "com.clix.samplecreator",
+  "displayName": "Sample Creator",
+  "version": "1.0.0",
+  "unity": "2022.1",
+  "description": "(TODO complete me) Add a menu item to create a sample for your Package",
+  "keywords": [
+    "unity"
+  ],
+  "repository": {
+    "url": "",
+    "type": "git",
+    "revision": "f110c8c230d253654afed153569030a587cc7557"
+  },
+  "upmCi": {
+    "footprint": "f9e81f42318ed88a56c8bf031a82ee5c30370e88"
+  }
+}
