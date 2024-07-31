@@ -1,7 +1,7 @@
 {
     "name": "SampleCreator.Tests",
     "rootNamespace": "",
-    "references": [],
+    "references": ["SampleCreator.Editor"],
     "includePlatforms": [
         "Editor"
     ],

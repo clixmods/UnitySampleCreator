@@ -54,28 +54,5 @@ namespace SampleCreator.Editor
 
             return null;
         }
-
-        private static void AddSampleToPackage(string packageJson, Sample sample)
-        {
-            // Search "samples" key in package.json 
-            
-        }
-        
-        /// <summary>
-        /// Get samples from package.json. Returns null if no samples are found.
-        /// </summary>
-        /// <param name="packageJson">The package.json file as a string.</param>
-        private static Sample[] GetSamplesFromPackage(string packageJson)
-        {
-            // Search "samples" key in package.json 
-            JObject json = JObject.Parse(packageJson);
-            
-            if (json["samples"] != null)
-            {
-                return json["samples"].ToObject<Sample[]>();
-            }
-            
-            return null;
-        }
     }
 }

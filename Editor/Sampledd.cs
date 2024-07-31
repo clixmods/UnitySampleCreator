@@ -1,6 +1,6 @@
 ﻿namespace SampleCreator.Editor
 {
-    public struct Sample
+    public struct Sampledd
     {
         public string DisplayName;
         
