@@ -1,7 +1,7 @@
-﻿using System;
-using Unity.Plastic.Newtonsoft.Json;
-using Unity.Plastic.Newtonsoft.Json.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.PackageManager.UI;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace SampleCreator.Editor
 {
@@ -16,27 +16,14 @@ namespace SampleCreator.Editor
         /// <summary>
         /// Get samples from package.json. Returns null if no samples are found.
         /// </summary>
-        /// <param name="packageJson">The package.json file as a string.</param>
+        /// <param name="packageInfo">The package name</param>
         /// <returns>An array of Sample objects or null if no samples are found.</returns>
-        public static Sample[] GetSamplesFromPackage(string packageJson)
+        public static Sample[] GetSamplesFromPackage(PackageInfo packageInfo)
         {
-            try
-            {
-                //var samples = Sample.FindByPackage();
-
-
-            }
-            catch (JsonReaderException ex)
-            {
-                Console.WriteLine($"JSON parsing error: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Unexpected error: {ex.Message}");
-            }
+            IEnumerable<Sample> samples = Sample.FindByPackage(packageInfo.name, packageInfo.version);
 
             // Return null if "samples" key is not found or in case of an error
-            return null;
+            return samples?.ToArray();
         }
     }
 }
