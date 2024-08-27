@@ -13,9 +13,15 @@ namespace SampleCreator.Editor
     public class SampleCreatorWindow : EditorWindow
     {
         public List<PackageInfo> packages = new List<PackageInfo>();
-        private int _selectedPackage;
+        
+        
+        private int _selectedPackageIndex;
+        private int _previousSelectedPackageIndex = -1;
+        
         private List<SampleElement> sampleElements = new List<SampleElement>();
         private Vector2 scrollPosition;
+        
+        private bool _isUpdatingPackages;
 
         private class SampleElement
         {
@@ -39,6 +45,14 @@ namespace SampleCreator.Editor
 
         private async void OnGUI()
         {
+            if (_isUpdatingPackages)
+            {
+                // Display a loading spinner
+                EditorGUILayout.LabelField("Loading packages...");
+
+                return;
+            }
+            
             GUILayout.Label("Create Samples", EditorStyles.boldLabel);
             GUILayout.Space(10);
 
@@ -50,24 +64,103 @@ namespace SampleCreator.Editor
             GUILayout.Space(10);
 
             // Display the dropdown with the list of packages to choose from
-            _selectedPackage = EditorGUILayout.Popup("Select Package", _selectedPackage, packages.Select(p => p.name).ToArray());
-
-            // Draw information about the selected package
-            if (packages.Count > 0)
+            _selectedPackageIndex = EditorGUILayout.Popup("Select Package", _selectedPackageIndex,
+                packages.Select(p => p.name).ToArray());
+            
+            if(_selectedPackageIndex != _previousSelectedPackageIndex)
             {
-                GUILayout.Label("Package Name: " + packages[_selectedPackage].name);
-                GUILayout.Label("Version: " + packages[_selectedPackage].version);
-                GUILayout.Label("Description: " + packages[_selectedPackage].description);
+                _previousSelectedPackageIndex = _selectedPackageIndex;
+                UpdateSamplesList();
+            }
+
+            PackageInfo selectedPackage = packages[_selectedPackageIndex];
+
+            if (selectedPackage != null)
+            {
+                // Draw information about the selected package
+                if (packages.Count > 0)
+                {
+                    GUILayout.Label("Package Name: " + packages[_selectedPackageIndex].name);
+                    GUILayout.Label("Version: " + packages[_selectedPackageIndex].version);
+                    GUILayout.Label("Description: " + packages[_selectedPackageIndex].description);
+                }
+
+                GUILayout.Space(10);
+
+                // Editable list of sample elements
+                GUILayout.Label("List of elements to edit samples:", EditorStyles.boldLabel);
+                GUILayout.Space(5);
+                
+                if (GUILayout.Button("Add New Sample Element"))
+                {
+                    sampleElements.Add(new SampleElement());
+                }
+
+                GUILayout.Space(10);
+
+                // Add scroll view
+                scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+
+                for (int i = 0; i < sampleElements.Count; i++)
+                {
+                    GUILayout.BeginVertical("box");
+                    sampleElements[i].Name = EditorGUILayout.TextField("Name", sampleElements[i].Name);
+                    sampleElements[i].Description =
+                        EditorGUILayout.TextField("Description", sampleElements[i].Description);
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("Folder", GUILayout.Width(50));
+                    if (GUILayout.Button(string.IsNullOrEmpty(sampleElements[i].Folder)
+                            ? "Select Folder"
+                            : sampleElements[i].Folder))
+                    {
+                        string selectedFolder = EditorUtility.OpenFolderPanel("Select Folder", "", "");
+                        if (!string.IsNullOrEmpty(selectedFolder))
+                        {
+                            sampleElements[i].Folder = selectedFolder;
+                        }
+                    }
+
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.Space(5);
+                    if (GUILayout.Button("Remove"))
+                    {
+                        sampleElements.RemoveAt(i);
+                    }
+
+                    GUILayout.EndVertical();
+                    GUILayout.Space(5);
+                }
+
+                EditorGUILayout.EndScrollView();
+            }
+
+
+            // Display a button to create samples for the selected package
+            if (GUILayout.Button("Create Samples"))
+            {
+                // Create samples for the selected package
+                foreach (SampleElement sampleElement in sampleElements)
+                {
+                    Sampledd sample = new Sampledd()
+                    {
+                        DisplayName = sampleElement.Name,
+                        Description = sampleElement.Description,
+                        Path = sampleElement.Folder
+                    };
+
+                    SampleHelper.AddSampleToPackage(selectedPackage, sample);
+                }
             }
 
             GUILayout.Space(10);
+        }
 
-            // Editable list of sample elements
-            GUILayout.Label("List of elements to edit samples:", EditorStyles.boldLabel);
-            GUILayout.Space(5);
-
-            // Initialize sample elements from samples in selected package
-            Sample[] samples = SampleHelper.GetSamplesFromPackage(packages[_selectedPackage]);
+        private void UpdateSamplesList()
+        {
+            Sample[] samples = SampleHelper.GetSamplesFromPackage(packages[_selectedPackageIndex]);
+            
             if (samples != null && sampleElements.Count == 0)
             {
                 sampleElements = samples.Select(s => new SampleElement()
@@ -77,53 +170,11 @@ namespace SampleCreator.Editor
                     Folder = s.resolvedPath
                 }).ToList();
             }
-
-            if (GUILayout.Button("Add New Sample Element"))
+            // Clear the list of sample elements if no samples are found
+            else
             {
-                sampleElements.Add(new SampleElement());
+                sampleElements.Clear();
             }
-
-            GUILayout.Space(10);
-
-            // Add scroll view
-            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
-
-            for (int i = 0; i < sampleElements.Count; i++)
-            {
-                GUILayout.BeginVertical("box");
-                sampleElements[i].Name = EditorGUILayout.TextField("Name", sampleElements[i].Name);
-                sampleElements[i].Description = EditorGUILayout.TextField("Description", sampleElements[i].Description);
-
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Folder", GUILayout.Width(50));
-                if (GUILayout.Button(string.IsNullOrEmpty(sampleElements[i].Folder) ? "Select Folder" : sampleElements[i].Folder))
-                {
-                    string selectedFolder = EditorUtility.OpenFolderPanel("Select Folder", "", "");
-                    if (!string.IsNullOrEmpty(selectedFolder))
-                    {
-                        sampleElements[i].Folder = selectedFolder;
-                    }
-                }
-                GUILayout.EndHorizontal();
-
-                GUILayout.Space(5);
-                if (GUILayout.Button("Remove"))
-                {
-                    sampleElements.RemoveAt(i);
-                }
-                GUILayout.EndVertical();
-                GUILayout.Space(5);
-            }
-
-            EditorGUILayout.EndScrollView();
-
-            // Display a button to create samples for the selected package
-            if (GUILayout.Button("Create Samples"))
-            {
-                // Create samples for the selected package
-            }
-
-            GUILayout.Space(10);
         }
 
         private async Task GenerateListPackagesInstalled()
@@ -137,6 +188,7 @@ namespace SampleCreator.Editor
             // Wait for the packages to be fetched
             while (!packagesRequest.IsCompleted)
             {
+                _isUpdatingPackages = true;
                 await Task.Delay(100);
             }
 
@@ -144,6 +196,8 @@ namespace SampleCreator.Editor
             {
                 packages.Add(package);
             }
+            
+            _isUpdatingPackages = false;
         }
     }
 }
