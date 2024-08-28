@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
+using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEditor.PackageManager.UI;
 using UnityEngine;
@@ -10,7 +11,7 @@ using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace SampleCreator.Editor
 {
-    public class SampleCreatorWindow : EditorWindow
+    public partial class SampleCreatorWindow : EditorWindow
     {
         public List<PackageInfo> packages = new List<PackageInfo>();
         
@@ -22,13 +23,6 @@ namespace SampleCreator.Editor
         private Vector2 scrollPosition;
         
         private bool _isUpdatingPackages;
-
-        private class SampleElement
-        {
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public string Folder { get; set; }
-        }
 
         [MenuItem("Sample Creator/Open Window")]
         private static void ShowWindow()
@@ -136,14 +130,14 @@ namespace SampleCreator.Editor
                 EditorGUILayout.EndScrollView();
             }
 
-
+            
             // Display a button to create samples for the selected package
             if (GUILayout.Button("Create Samples"))
             {
                 // Create samples for the selected package
                 foreach (SampleElement sampleElement in sampleElements)
                 {
-                    Sampledd sample = new Sampledd()
+                    SampleCreationInfo sample = new SampleCreationInfo()
                     {
                         DisplayName = sampleElement.Name,
                         Description = sampleElement.Description,
@@ -179,25 +173,37 @@ namespace SampleCreator.Editor
 
         private async Task GenerateListPackagesInstalled()
         {
-            // Get packages from the package manager
-            ListRequest packagesRequest = UnityEditor.PackageManager.Client.List(true);
-
-            // Clear the list of package names
-            packages.Clear();
-
-            // Wait for the packages to be fetched
-            while (!packagesRequest.IsCompleted)
+            try
             {
                 _isUpdatingPackages = true;
-                await Task.Delay(100);
-            }
+                ListRequest packagesRequest = Client.List(true);
 
-            foreach (PackageInfo package in packagesRequest.Result.ToArray())
-            {
-                packages.Add(package);
+                packages.Clear();
+
+                while (!packagesRequest.IsCompleted)
+                {
+                    await Task.Delay(100);
+                }
+
+                if (packagesRequest.Status == StatusCode.Failure)
+                {
+                    EditorUtility.DisplayDialog("Error", "Failed to load packages: " + packagesRequest.Error.message, "OK");
+                    return;
+                }
+
+                foreach (PackageInfo package in packagesRequest.Result)
+                {
+                    packages.Add(package);
+                }
             }
-            
-            _isUpdatingPackages = false;
+            catch (Exception ex)
+            {
+                Debug.LogError("An error occurred while loading packages: " + ex.Message);
+            }
+            finally
+            {
+                _isUpdatingPackages = false;
+            }
         }
     }
 }

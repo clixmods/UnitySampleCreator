@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using Unity.Plastic.Newtonsoft.Json.Linq;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace SampleCreator.Editor
@@ -10,11 +8,9 @@ namespace SampleCreator.Editor
         [MenuItem("Assets/Create Samples for this folder...", true)]
         private static bool IsFolderSelected()
         {
-            string path = AssetDatabase.GetAssetPath(Selection.activeObject);
-
-            Debug.Log(System.IO.Directory.Exists(path));
-                
-            return System.IO.Directory.Exists(path);
+            // Get the current selected folder in Assets window
+            string folderPath = GetSelectedFolderPath();
+            return !string.IsNullOrEmpty(folderPath);
         }
         
         [MenuItem("Assets/Create Samples for this folder...", false, 20)]
@@ -24,6 +20,13 @@ namespace SampleCreator.Editor
 
             if (!string.IsNullOrEmpty(folderPath))
             {
+                PackageSelectorWindow.ShowWindow(new SampleCreationInfo()
+                {
+                    DisplayName = "Sample",
+                    Description = "Sample description",
+                    Path = folderPath
+                });
+                
                 AssetDatabase.Refresh();
             }
             else

@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Unity.Plastic.Newtonsoft.Json.Linq;
-using UnityEditor;
 using UnityEditor.PackageManager.UI;
 using UnityEngine;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
@@ -27,14 +27,14 @@ namespace SampleCreator.Editor
             }
         }
         
-        public static void AddSampleToPackage(PackageInfo packageInfo, Sampledd sampledd)
+        public static void AddSampleToPackage(PackageInfo packageInfo, SampleCreationInfo sampleCreationInfo)
         {
             //1. Copy and paste the sample folder to the package folder in Samples~ folder
             string packageFolder = "Packages/" + packageInfo.name;
-            string sampleFolder = sampledd.Path;
+            string sampleFolder = sampleCreationInfo.Path;
             
             // Get the destination folder in absolute path (add absolute path to the package folder)
-            string destinationFolder = Path.Combine(PackageInfo.FindForAssetPath("Packages/" + packageInfo.name).assetPath,"Samples~", sampledd.DisplayName);
+            string destinationFolder = Path.Combine(PackageInfo.FindForAssetPath("Packages/" + packageInfo.name).assetPath,"Samples~", sampleCreationInfo.DisplayName);
         
             // Ensure the destination directory exists
             if (!Directory.Exists(destinationFolder))
@@ -69,9 +69,9 @@ namespace SampleCreator.Editor
             // Create a new sample object
             JObject sample = new JObject
             {
-                ["displayName"] = sampledd.DisplayName,
-                ["description"] = sampledd.Description,
-                ["path"] = Path.Combine("Samples~", sampledd.DisplayName)
+                ["displayName"] = sampleCreationInfo.DisplayName,
+                ["description"] = sampleCreationInfo.Description,
+                ["path"] = Path.Combine("Samples~", sampleCreationInfo.DisplayName)
             };
             
             // Add the sample object to the "samples" key
@@ -90,10 +90,16 @@ namespace SampleCreator.Editor
         /// <summary>
         /// Get samples from package.json. Returns null if no samples are found.
         /// </summary>
-        /// <param name="packageInfo">The package name</param>
+        /// <param name="packageInfo">The package information entity</param>
+        /// <exception cref="ArgumentNullException">Throw if the packageInfo is null.</exception>
         /// <returns>An array of Sample objects or null if no samples are found.</returns>
         public static Sample[] GetSamplesFromPackage(PackageInfo packageInfo)
         {
+            if(packageInfo == null)
+            {
+                throw new ArgumentNullException(nameof(packageInfo));
+            }
+            
             IEnumerable<Sample> samples = Sample.FindByPackage(packageInfo.name, packageInfo.version);
 
             // Return null if "samples" key is not found or in case of an error
